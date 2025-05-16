@@ -5,7 +5,7 @@ from fitness_1w import fitness
 
 class SpottedHyenaOptimizer:
 
-    def __init__(self, num_hyenas, max_iter, lb, ub, matrix, questions, alpha):
+    def __init__(self, num_hyenas, max_iter, lb, ub, matrix, questions, required_difficulty=0.5):
         """
         Initialize the Spotted Hyena Optimizer
         
@@ -16,7 +16,7 @@ class SpottedHyenaOptimizer:
         ub: Upper bound of variables
         matrix: Dictionary containing CP (key) and N (value) pairs
         questions: Dictionary containing questions grouped by CP
-        alpha: Weight for the difficulty component in fitness function
+        required_difficulty: Target difficulty level for the exam
         """
         self.num_hyenas = num_hyenas
         self.max_iter = max_iter
@@ -24,7 +24,7 @@ class SpottedHyenaOptimizer:
         self.ub = ub
         self.matrix = matrix
         self.questions = questions
-        self.alpha = alpha
+        self.required_difficulty = required_difficulty
         
         # Check if there are any questions available for the given CPs in the matrix
         available_questions_count = 0
@@ -199,21 +199,8 @@ class SpottedHyenaOptimizer:
         if len(selected_questions) != 100:
             return float('inf')
         
-        # Create a list of Question objects with the required attributes
-        question_objects = []
-        for q in selected_questions:
-            # Create an object with Difficulty and Time attributes
-            class Question:
-                def __init__(self, difficulty, time):
-                    self.Difficulty = difficulty
-                    self.Time = time
-            
-            question_objects.append(Question(q['DL'], q['TQ']))
-        
-        # Use the new fitness function with fixed parameters
-        # required_difficulty=0.5, required_time=5400
-        alpha = self.alpha  # Weight for difficulty component
-        fitness_value = fitness(question_objects, alpha, 0.5, 5400)
+        # Use our new fitness function with the position vector, matrix, questions, and required difficulty
+        fitness_value = fitness(binary_position, self.matrix, self.questions, self.required_difficulty)
         
         return fitness_value
     
@@ -497,17 +484,19 @@ class SpottedHyenaOptimizer:
         avg_difficulty = total_difficulty / len(selected_questions) if selected_questions else 0
         
         print(f"\nTotal questions: {len(selected_questions)}")
-        print(f"Average difficulty: {avg_difficulty:.4f} (Target: 0.5)")
+        print(f"Average difficulty: {avg_difficulty:.4f} (Target: {self.required_difficulty:.1f})")
         print(f"Total time: {total_time:.2f} (Target: 5400)")
         
-        # Calculate fitness value using the new formula
-        class Question:
-            def __init__(self, difficulty, time):
-                self.Difficulty = difficulty
-                self.Time = time
+        # Create binary position vector for the selected questions
+        binary_position = np.zeros(self.dim)
+        for pos_idx, (cp, q_idx) in enumerate(self.position_mapping):
+            for question in selected_questions:
+                if question['CP'] == cp and question['CQ'] == self.questions[cp][q_idx]['CQ']:
+                    binary_position[pos_idx] = 1
+                    break
         
-        question_objects = [Question(q['DL'], q['TQ']) for q in selected_questions]
-        fitness_value = fitness(question_objects, self.alpha, 0.5, 5400)
-        print(f"Fitness value: {fitness_value:.6f} (alpha={self.alpha})")
+        # Calculate fitness value using our new fitness function
+        fitness_value = fitness(binary_position, self.matrix, self.questions, self.required_difficulty)
+        print(f"Fitness value: {fitness_value:.6f} (target difficulty={self.required_difficulty})")
         
         return selected_questions
