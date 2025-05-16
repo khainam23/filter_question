@@ -1,9 +1,10 @@
 import numpy as np
 import random
 import math
-from fitness import fitness
+from fitness_1w import fitness
 
 class SpottedHyenaOptimizer:
+
     def __init__(self, num_hyenas, max_iter, lb, ub, matrix, questions, alpha):
         """
         Initialize the Spotted Hyena Optimizer

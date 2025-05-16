@@ -1,3 +1,9 @@
+import sys
+import os
+
+# Thêm thư mục hiện tại vào sys.path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 import read_data
 import numpy as np
 from sho import SpottedHyenaOptimizer

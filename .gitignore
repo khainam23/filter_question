@@ -2,5 +2,6 @@
 /.vscode
 /multiple_runs_results
 /.qodo
+/run
 
 *.png
